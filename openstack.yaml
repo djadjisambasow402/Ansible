@@ -1,0 +1,40 @@
+---
+- hosts: openstack
+  become: true
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - python3
+        - python3-pip
+        - git
+
+    - name: Upgrade Ansible to a compatible version
+      pip:
+        name: ansible==2.10.0
+        state: present
+
+    - name: Install required Ansible collections
+      ansible.builtin.command: ansible-galaxy collection install community.general
+
+    - name: Clone OpenStack-Ansible repository
+      git:
+        repo: https://opendev.org/openstack/openstack-ansible
+        dest: /opt/openstack-ansible
+        version: stable/wallaby
+
+    - name: Install OpenStack-Ansible dependencies
+      pip:
+        requirements: /opt/openstack-ansible/requirements.txt
+
+    - name: Generate OpenStack-Ansible configuration
+      command: "/opt/openstack-ansible/scripts/bootstrap-ansible.sh"
+
+    - name: Run OpenStack-Ansible playbooks
+      command: "ansible-playbook -i /opt/openstack-ansible/playbooks/inventory/dynamic_inventory.py /opt/openstack-ansible/playbooks/setup-hosts.yml"

@@ -1,0 +1,125 @@
+# ok # si vous rencontrer un blem de connection db installe sudo mysql_secure_installion
+# entrer ,y,y,y,n,n,y
+---
+- name: Install GLPI on Ubuntu and Debian
+  hosts: debian
+  become: true
+  vars:
+    #ansible_python_interpreter: /usr/bin/python2.7
+    glpi_version: "10.0.11"
+    glpi_database: "glpi-db"
+    glpi_db_user: "adminsrv"
+    glpi_db_password: "domoda"
+    mysql_root_user: "root"
+    mysql_root_password: "lildia"  
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - apache2
+          - mariadb-server
+          - php
+          - php-xml 
+          - php-common 
+          - php-json 
+          - php-mysql 
+          - php-mbstring 
+          - php-curl 
+          - php-gd 
+          - php-intl 
+          - php-zip 
+          - php-bz2 
+          - php-imap 
+          - php-apcu
+          - php-ldap
+        state: present
+
+    - name: Download GLPI archive
+      get_url:
+        url: "https://github.com/glpi-project/glpi/releases/download/{{ glpi_version }}/glpi-{{ glpi_version }}.tgz"
+        dest: "/tmp/glpi-{{ glpi_version }}.tgz"
+
+    - name: Extract GLPI archive
+      ansible.builtin.unarchive:
+        src: "/tmp/glpi-{{ glpi_version }}.tgz"
+        dest: "/var/www/html/"
+        remote_src: yes
+
+    - name: Set ownership and permissions
+      file:
+        path: "/var/www/html/glpi"
+        state: directory
+        owner: www-data
+        group: www-data
+      become: true
+
+    - name: Set write permissions for GLPI configuration files
+      ansible.builtin.file:
+        path: "/var/www/html/glpi/config/config_db.php"
+        state: touch
+        mode: '0644'
+        owner: www-data
+        group: www-data
+      become: true
+
+    - name: Set write permissions for GLPI encryption key
+      ansible.builtin.file:
+        path: "/var/www/html/glpi/config/glpicrypt.key"
+        state: touch
+        mode: '0644'
+        owner: www-data
+        group: www-data
+      become: true
+
+    - name: Permissions pour les fichiers de log
+      ansible.builtin.file:
+        path: "/var/www/html/glpi/files/_log"
+        state: directory
+        mode: '0644'
+        owner: www-data
+        group: www-data
+      become: true
+
+
+    - name: Configure Apache virtual host
+      template:
+        src: glpi.apache.conf.j2
+        dest: "/etc/apache2/sites-available/glpi.conf"
+      notify:
+        - restart apache
+
+    - name: Enable GLPI site
+      ansible.builtin.command:
+        cmd: "a2ensite glpi"
+      notify:
+        - restart apache
+
+    - name: Create GLPI database
+      ansible.builtin.mysql_db:
+        name: "{{ glpi_database }}"
+        state: present
+        login_user: "{{ mysql_root_user }}"
+        login_password: "{{ mysql_root_password }}"
+        encoding: utf8mb4
+        collation: utf8mb4_unicode_ci
+
+    - name: Create GLPI database user
+      ansible.builtin.mysql_user:
+        name: "{{ glpi_db_user }}"
+        password: "{{ glpi_db_password }}"
+        host: "localhost"
+        priv: "{{ glpi_database }}.*:ALL"
+        state: present
+        login_user: "{{ mysql_root_user }}"
+        login_password: "{{ mysql_root_password }}"
+
+  handlers:
+    - name: restart apache
+      ansible.builtin.service:
+        name: apache2
+        state: restarted

@@ -1,0 +1,28 @@
+# ok
+---
+- name: Install and Configure OpenLDAP
+  hosts: debian
+  become: true
+
+  tasks:
+    - name: Install OpenLDAP
+      apt:
+        name: slapd
+        state: present
+
+    - name: Install ldap-utils (optional)
+      apt:
+        name: ldap-utils
+        state: present
+
+    - name: Copy LDAP configuration
+      template:
+        src: slapd.conf.j2
+        dest: /etc/ldap/slapd.conf
+      notify: restart slapd
+
+  handlers:
+    - name: restart slapd
+      service:
+        name: slapd
+        state: restarted

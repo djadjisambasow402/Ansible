@@ -1,0 +1,63 @@
+---
+- name: Install and configure Elasticsearch
+  hosts: ubuntu
+  become: true
+  tasks:
+    - name: Import Elasticsearch GPG key
+      apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        state: present
+
+    - name: Install apt-transport-https
+      apt:
+        name: apt-transport-https
+        state: present
+
+    - name: Add Elasticsearch APT repository
+      apt_repository:
+        repo: deb https://artifacts.elastic.co/packages/8.x/apt stable main
+        state: present
+        update_cache: yes
+
+    - name: Update apt packages
+      apt:
+        update_cache: yes
+
+    - name: Install Elasticsearch
+      apt:
+        name: elasticsearch
+        state: present
+
+# option 1
+    # - name: Edit elasticsearch.yml using sed
+    #   command: >
+    #     sed -i -e 's/^#network.host: 192.168.0.1/network.host: localhost/' \
+    #           -e 's/^#http.port: 9200/http.port: 9200/' \
+    #           -e 's/^xpack.security.enabled: true/xpack.security.enabled: false/' \
+    #           /etc/elasticsearch/elasticsearch.yml
+
+# option 2
+    - name: Copy elasticsearch.yml.j2 template
+      template:
+        src: elasticsearch.yml.j2
+        dest: /etc/elasticsearch/elasticsearch.yml
+        mode: 0644
+
+
+    - name: Start Elasticsearch service
+      service:
+        name: elasticsearch
+        state: started
+
+    - name: Wait for Elasticsearch to start
+      wait_for:
+        port: 9200
+
+    - name: Test Elasticsearch using curl
+      uri:
+        url: http://localhost:9200
+        method: GET
+      register: result
+
+    - debug:
+        var: result.content

@@ -1,0 +1,46 @@
+#ok
+---
+- name: Install and configure SSH
+  hosts: debian
+  become: yes  # Run tasks with elevated privileges (sudo)
+
+  tasks:
+    - name: Install OpenSSH
+      apt:
+        name: openssh-server
+        state: present
+      when: "ansible_os_family == 'Debian'"
+
+    - name: Start and enable SSH service
+      service:
+        name: ssh
+        state: started
+        enabled: yes
+      when: "ansible_os_family == 'Debian'"
+
+    - name: Install OpenSSH
+      apt:
+        name: openssh-server
+        state: present
+      when: "ansible_os_family == 'Ubuntu'"
+
+    - name: Start and enable SSH service
+      systemd:
+        name: ssh
+        state: started
+        enabled: yes
+      when: "ansible_os_family == 'Ubuntu'"
+
+    - name: Set PasswordAuthentication to yes
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+      notify:
+        - restart ssh
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: ssh
+        state: restarted

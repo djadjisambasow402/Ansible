@@ -1,0 +1,104 @@
+---
+- name: Install and Configure Kafka on Ubuntu
+  hosts: ubuntu
+  become: yes
+
+  vars: 
+    kafka_password: "P@$$word-2023"
+
+  tasks:
+    - name: Create Kafka User
+      user:
+        name: kafka
+        password: "{{ kafka_password | password_hash('sha512') }}"
+        groups: sudo
+
+    - name: Create Downloads Directory
+      file:
+        path: /home/kafka/Downloads
+        state: directory
+        owner: kafka
+        group: kafka
+
+    - name: Download Kafka Binaries
+      get_url:
+        url: "https://downloads.apache.org/kafka/3.6.1/kafka_2.13-3.6.1.tgz"
+        dest: "/home/kafka/Downloads/kafka.tgz"
+        owner: kafka
+        group: kafka
+
+    - name: Extract Kafka Binaries
+      ansible.builtin.unarchive:
+        src: "/home/kafka/Downloads/kafka.tgz"
+        dest: "/home/kafka"
+        remote_src: yes
+        creates: "/home/kafka/kafka" 
+      become_user: kafka
+
+    - name: mv Kafka 
+      command: mv /home/kafka/kafka_2.13-3.6.1 /home/kafka/kafka
+      become_user: kafka
+
+    - name: Configure Kafka Server
+      ansible.builtin.template:
+        src: kafka-server.properties.j2
+        dest: "/home/kafka/kafka/config/server.properties"
+      become_user: kafka
+
+    # - name: Create Zookeeper systemd Unit File
+    #   copy:
+    #     src: "zookeeper.service"
+    #     dest: "/etc/systemd/system/zookeeper.service"
+
+    - name: Create Kafka systemd Unit File
+      copy:
+        src: "kafka.service"
+        dest: "/etc/systemd/system/kafka.service"
+
+    - name: Ensure Kafka logs directory exists
+      file:
+        path: /home/kafka/logs
+        state: directory
+        owner: kafka
+        group: kafka
+        mode: '0755'
+
+    - name: Ensure proper permissions on Kafka directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: kafka
+        group: kafka
+        mode: '0755'
+      loop:
+        - /home/kafka/kafka
+        - /home/kafka/kafka/config
+
+    - name: Reload Systemd
+      systemd:
+        daemon_reload: yes
+      become_user: root
+
+    - name: Start and Enable Zookeeper and Kafka
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - zookeeper
+        - kafka
+
+    # - name: Check Kafka Status
+    #   systemd:
+    #     name: kafka
+    #     state: started
+    #   register: kafka_status
+    #   until: kafka_status.status == 'running'
+    #   retries: 3
+    #   delay: 10
+
+    # - name: Create Kafka Topic
+    #   ansible.builtin.command: "/home/kafka/kafka/bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic TutorialTopic"
+    #   become_user: kafka
+
+

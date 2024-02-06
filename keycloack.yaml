@@ -1,0 +1,60 @@
+# ok debian
+---
+- hosts: ubuntu
+  become: yes
+  vars:
+    keycloak_version: "23.0.1"
+
+  tasks:
+    - name: Mise à jour de la liste des paquets
+      apt:
+        update_cache: yes
+
+    - name: Installation des dépendances
+      apt:
+        name: 
+          - unzip
+          - wget
+          - default-jdk
+
+    - name: Téléchargement de Keycloak
+      get_url:
+        url: "https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.zip"
+        dest: "/tmp/keycloak-{{ keycloak_version }}.zip"
+
+    - name: Extraction de Keycloak
+      unarchive:
+        src: "/tmp/keycloak-{{ keycloak_version }}.zip"
+        dest: "/opt/"
+        remote_src: yes
+
+    - name: Création d'un lien symbolique
+      file:
+        src: "/opt/keycloak-{{ keycloak_version }}"
+        dest: "/opt/keycloak"
+        state: link
+
+    - name: Création de l'utilisateur keycloak
+      user:
+        name: keycloak
+        comment: "Keycloak User"
+        system: yes
+        shell: /sbin/nologin
+
+    - name: Modification des permissions du répertoire Keycloak
+      file:
+        path: "/opt/keycloak"
+        state: directory
+        owner: keycloak
+        group: keycloak
+
+    - name: Configuration du fichier de démarrage
+      template:
+        src: "keycloak.service.j2"
+        dest: "/etc/systemd/system/keycloak.service"
+
+    - name: Démarrage du service Keycloak
+      systemd:
+        name: keycloak
+        state: started
+        enabled: yes

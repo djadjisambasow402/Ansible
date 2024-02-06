@@ -1,0 +1,19 @@
+---
+- name: Install Apache on CentOS
+  hosts: your_target_servers
+  become: true
+
+  tasks:
+    - name: Install EPEL repository (if not already installed)
+      command: dnf install -y epel-release
+      when: ansible_distribution == 'CentOS' and ansible_distribution_major_version == '8'
+
+    - name: Install Apache
+      package:
+        name: httpd
+        state: present
+
+    - name: Start Apache service
+      service:
+        name: httpd
+        state: started

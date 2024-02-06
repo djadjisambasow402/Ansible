@@ -1,0 +1,36 @@
+# ok
+---
+- name: Install and configure Bind9
+  hosts: debian
+  become: yes
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Bind9
+      apt:
+        name: bind9
+        state: present
+
+    - name: Copy named.conf.local
+      template:
+        src: named.conf.local.j2
+        dest: /etc/bind/named.conf.local
+      notify: Reload Bind9
+
+    - name: Copy forward and reverse zone files
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - { src: forward.zone.j2, dest: /etc/bind/forward.zone }
+        - { src: reverse.zone.j2, dest: /etc/bind/reverse.zone }
+      notify: Reload Bind9
+
+  handlers:
+    - name: Reload Bind9
+      service:
+        name: bind9
+        state: reloaded

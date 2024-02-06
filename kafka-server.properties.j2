@@ -1,0 +1,19 @@
+# server.properties.j2
+delete.topic.enable = true
+#log.dirs=/home/kafka/logs
+# Add other Kafka configuration properties as needed
+#zookeeper.connect=localhost:2181
+
+
+broker.id=1001
+listeners=PLAINTEXT://0.0.0.0:9092
+advertised.listeners=PLAINTEXT://192.168.146.138:9092
+log.dirs=/home/kafka/logs
+num.partitions=1
+
+# ZooKeeper connection
+zookeeper.connect=192.168.146.138:2181
+
+# Other configurations
+# Add any additional configurations you need here
+

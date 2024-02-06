@@ -1,0 +1,26 @@
+---
+- name: Install and configure Squid proxy
+  hosts: debian
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Squid
+      apt:
+        name: squid
+        state: present
+
+    - name: Configure Squid
+      template:
+        src: squid.conf.j2
+        dest: /etc/squid/squid.conf
+      notify: Restart Squid
+
+  handlers:
+    - name: Restart Squid
+      service:
+        name: squid
+        state: restarted

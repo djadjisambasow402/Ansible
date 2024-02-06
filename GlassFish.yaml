@@ -1,0 +1,87 @@
+---
+- name: Install GlassFish on Ubuntu
+  hosts: ubuntu
+  become: true
+  tasks:
+    - name: Install basic dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - software-properties-common
+        - apt-transport-https
+        - wget
+        - ca-certificates
+        - gnupg2
+        - ubuntu-keyring
+        - unzip
+
+    - name: Install Java OpenJDK and JRE
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - default-jdk
+        - default-jre
+
+    - name: Download GlassFish archive
+      get_url:
+        url: "https://www.eclipse.org/downloads/download.php?file=/ee4j/glassfish/glassfish-7.0.9.zip"
+        dest: "/tmp/glassfish-7.0.9.zip"
+        mode: '0644'
+
+    - name: Unpack GlassFish
+      unarchive:
+        src: "/tmp/glassfish-7.0.9.zip"
+        dest: "/opt"
+        remote_src: true
+        mode: '0644'
+
+    - name: Create systemd file for GlassFish
+      copy:
+        content: |
+          [Unit]
+          Description = GlassFish Server v7.0.9
+          After = syslog.target network.target
+
+          [Service]
+          User = root
+          ExecStart = /usr/bin/java -jar /opt/glassfish7/glassfish/lib/client/appserver-cli.jar start-domain
+          ExecStop = /usr/bin/java -jar /opt/glassfish7/glassfish/lib/client/appserver-cli.jar stop-domain
+          ExecReload = /usr/bin/java -jar /opt/glassfish7/glassfish/lib/client/appserver-cli.jar restart-domain
+          Type = forking
+
+          [Install]
+          WantedBy = multi-user.target
+        dest: "/etc/systemd/system/glassfish.service"
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Start and enable GlassFish service
+      systemd:
+        name: glassfish
+        enabled: yes
+        state: started
+
+    - name: Configure GlassFish admin password
+      command: "/opt/glassfish7/bin/asadmin --port 4848 change-admin-password"
+      args:
+        creates: "/opt/glassfish7/glassfish/domains/domain1/config/domain-passwords-aliases"
+      become_user: root
+
+    - name: Enable secure admin login
+      command: "/opt/glassfish7/bin/asadmin --port 4848 enable-secure-admin"
+      args:
+        creates: "/opt/glassfish7/glassfish/domains/domain1/config/domain-passwords-aliases"
+      become_user: root
+
+    - name: Configure firewall for GlassFish
+      ufw:
+        rule: "{{ item }}"
+        state: enabled
+      with_items:
+        - "4848"
+        - "8080"
+        - "OpenSSH"

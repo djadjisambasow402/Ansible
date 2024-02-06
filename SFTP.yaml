@@ -1,0 +1,43 @@
+---
+- name: Install and Configure SFTP
+  hosts: ubuntu
+  become: true
+
+  tasks:
+    - name: Install OpenSSH Server
+      apt:
+        name: openssh-server
+        state: present
+
+    - name: Configure SFTP
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Subsystem sftp'
+        line: 'Subsystem sftp internal-sftp'
+        backup: yes
+
+    - name: Restart SSH Service
+      systemd:
+        name: ssh
+        state: restarted
+
+
+################################## Configure SFTP Users ##################
+
+    #- name: Create SFTP User
+    #  user:
+    #    name: sftp_user
+    #    password: "{{ 'sftp_password' | password_hash('sha512') }}"
+    #    shell: /usr/sbin/nologin
+
+   # - name: Configure SFTP User Access
+   #   lineinfile:
+   #     path: /etc/ssh/sshd_config
+   #     regexp: '^Match User sftp_user'
+   #     line: 'ForceCommand internal-sftp'
+     #   backup: yes
+
+   # - name: Restart SSH Service
+  #    service:
+    #    name: ssh
+    #    state: restarted

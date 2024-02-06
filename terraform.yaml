@@ -1,0 +1,39 @@
+# ok
+---
+- name: Install Terraform on Ubuntu and Debian
+  hosts: debian
+  become: yes
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Install unzip
+      apt:
+        name: unzip
+        state: present
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Download Terraform
+      get_url:
+        url: "https://releases.hashicorp.com/terraform/0.15.0/terraform_0.15.0_linux_amd64.zip"
+        dest: "/tmp/terraform.zip"
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Unzip Terraform
+      ansible.builtin.unarchive:
+        src: "/tmp/terraform.zip"
+        dest: "/usr/local/bin/"
+        remote_src: yes
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Set executable permissions
+      ansible.builtin.file:
+        path: "/usr/local/bin/terraform"
+        mode: 'u+x'
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Print Terraform version
+      command: "terraform version"

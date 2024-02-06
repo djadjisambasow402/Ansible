@@ -1,0 +1,49 @@
+#ok
+---
+- name: Install and Configure Python
+  hosts: debian
+  become: yes
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Python
+      apt:
+        name: python3
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Python (Ubuntu)
+      apt:
+        name: python3
+        state: present
+      when: ansible_os_family == 'Ubuntu'
+
+    - name: Install Python pip
+      apt:
+        name: python3-pip
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Python pip (Ubuntu)
+      apt:
+        name: python3-pip
+        state: present
+      when: ansible_os_family == 'Ubuntu'
+
+    - name: Set Python alternatives (Debian)
+      alternatives:
+        name: python3
+        path: /usr/bin/python3
+        link: /usr/bin/python
+      when: ansible_os_family == 'Debian'
+
+    - name: Set Python alternatives (Ubuntu)
+      alternatives:
+        name: python3
+        path: /usr/bin/python3
+        link: /usr/bin/python
+      when: ansible_os_family == 'Ubuntu'

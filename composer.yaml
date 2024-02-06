@@ -1,0 +1,35 @@
+# ok
+---
+- name: Install Composer
+  hosts: debian
+  become: yes  # Run tasks with sudo
+
+  tasks:
+    - name: Install PHP and required extensions
+      apt:
+        name:
+          - php
+          - php-cli
+          - php-mbstring
+          - unzip
+        state: present
+
+    - name: Download and install Composer
+      get_url:
+        url: https://getcomposer.org/installer
+        dest: /tmp/install_composer.php
+
+    - name: Run Composer installer
+      command: "php /tmp/install_composer.php"
+      args:
+        chdir: /tmp
+      register: composer_install_result
+
+    - name: Move Composer to a global location
+      command: "mv /tmp/composer.phar /usr/local/bin/composer"
+      when: composer_install_result.rc == 0
+
+    - name: Remove temporary files
+      file:
+        path: /tmp/install_composer.php
+        state: absent

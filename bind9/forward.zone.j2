@@ -1,0 +1,13 @@
+; /etc/bind/forward.zone
+
+$TTL 1D
+@   IN SOA  ns1.example.com. admin.example.com. (
+           2023010101 ; Serial
+           8H         ; Refresh
+           4H         ; Retry
+           4W         ; Expire
+           1D)        ; Minimum TTL
+
+@   IN NS  ns1.example.com.
+@   IN A   192.168.1.1
+ns1 IN A   192.168.1.1

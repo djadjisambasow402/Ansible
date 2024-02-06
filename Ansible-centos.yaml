@@ -1,0 +1,15 @@
+---
+- name: Install Ansible on CentOS
+  hosts: your_target_host
+  become: yes  # Run tasks with sudo
+
+  tasks:
+    - name: Install EPEL repository
+      yum:
+        name: epel-release
+        state: present
+
+    - name: Install Ansible
+      yum:
+        name: ansible
+        state: present

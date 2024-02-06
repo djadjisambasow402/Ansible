@@ -1,0 +1,6 @@
+#!/bin/bash
+
+export CATALINA_HOME="/opt/apache-tomcat-{{ tomcat_version }}"
+export CATALINA_BASE="/opt/apache-tomcat-{{ tomcat_version }}"
+export CATALINA_PID="/opt/apache-tomcat-{{ tomcat_version }}/temp/tomcat.pid"
+export CATALINA_OPTS="$CATALINA_OPTS -Xms512M -Xmx1024M -server"

@@ -1,0 +1,14 @@
+# /opt/kafka/config/server.properties
+
+# Basics
+broker.id={{ broker_id }}
+listeners=PLAINTEXT://:9092
+advertised.listeners=PLAINTEXT://{{ ansible_default_ipv4.address }}:9092
+log.dirs=/var/lib/kafka/data
+num.partitions=1
+
+# ZooKeeper connection
+zookeeper.connect={{ zookeeper_host }}:2181
+
+# Other configurations
+# Add any additional configurations you need here

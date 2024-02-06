@@ -1,0 +1,59 @@
+---
+- name: Installation de MinIO
+  hosts: ubuntu
+  become: yes
+
+
+  tasks:
+    - name: Telecharger MinIO DEB package
+      get_url:
+        url: "https://dl.min.io/server/minio/release/linux-amd64/archive/minio_20240101163633.0.0_amd64.deb"
+        dest: "/tmp/minio.deb"
+
+
+    - name: Install MinIO DEB package
+      apt:
+        deb: "/tmp/minio.deb"
+      notify:
+       - Start MinIO service
+
+
+    - name: Creer minio-user group
+      group:
+        name: "minio-user"
+        state: "present"
+        system: yes
+
+
+    - name: Creer minio-user user
+      user:
+        name: "minio-user"
+        system: yes
+        shell: "/bin/false"
+        group: "minio-user"
+        state: "present"
+
+
+    - name: Creer le repertoire de donnees
+      file:
+        path: "/mnt/data"
+        state: "directory"
+        owner: "minio-user"
+        group: "minio-user"
+        mode: "0755"
+
+
+    - name: Creer le fichiers de configuration /etc/default/minio 
+      template:
+        src: "minio.conf.j2"
+        dest: "/etc/default/minio"
+        owner: "minio-user"
+        group: "minio-user"
+        mode: "0644"
+
+  handlers:
+    - name: Start MinIO service
+      systemd:
+        name: "minio"
+        state: "started"
+        enabled: yes

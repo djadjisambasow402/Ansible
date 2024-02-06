@@ -1,0 +1,13 @@
+---
+- name: Collecter des informations sur l'OS des machines virtuelles Ubuntu
+  hosts: all  #  le groupe d'hôtes cible
+  gather_facts: no      # Désactivez la collecte automatique des faits (informations générales) pour accélérer l'exécution
+
+  tasks:
+    - name: Obtenir des informations sur l'OS
+      shell: cat /etc/os-release  # Exécutez la commande "cat /etc/os-release"
+      register: os_info  # Enregistrez la sortie de la commande dans une variable
+
+    - name: Afficher les informations sur l'OS
+      debug:
+        var: os_info.stdout_lines   # Affichez la sortie de la commande dans la console

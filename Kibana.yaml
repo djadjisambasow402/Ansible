@@ -1,0 +1,37 @@
+#ok
+---
+- name: Install and Configure Kibana
+  hosts: debian
+  become: true
+
+  tasks:
+    - name: Install OpenJDK (Java is required for Kibana)
+      apt:
+        name: openjdk-17-jre
+        state: present
+
+    - name: Add Elastic GPG key
+      apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+    - name: Add Elastic APT repository
+      apt_repository:
+        repo: deb https://artifacts.elastic.co/packages/7.x/apt stable main
+        state: present
+
+    - name: Install Kibana
+      apt:
+        name: kibana
+        state: present
+
+    - name: Configure Kibana
+      template:
+        src: kibana.yml.j2
+        dest: /etc/kibana/kibana.yml
+      notify: restart kibana
+
+  handlers:
+    - name: restart kibana
+      service:
+        name: kibana
+        state: restarted

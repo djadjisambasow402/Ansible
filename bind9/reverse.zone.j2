@@ -1,0 +1,12 @@
+; /etc/bind/reverse.zone
+
+$TTL 1D
+@   IN SOA  ns1.example.com. admin.example.com. (
+           2023010101 ; Serial
+           8H         ; Refresh
+           4H         ; Retry
+           4W         ; Expire
+           1D)        ; Minimum TTL
+
+@   IN NS  ns1.example.com.
+1   IN PTR ns1.example.com.

@@ -1,0 +1,34 @@
+logfile /var/log/ntpstats/ntpd
+statsdir /var/log/ntpstats/
+statistics loopstats peerstats clockstats
+filegen loopstats file loopstats type day enable
+filegen peerstats file peerstats type day enable
+filegen clockstats file clockstats type day enable
+
+# Addresses to listen on (ntpd does not listen by default)
+listen on *
+#listen on 127.0.0.1
+#listen on ::1
+
+# sync to a single server
+#server ntp.example.org
+
+# use a random selection of 4 public stratum 2 servers
+# see http://twiki.ntp.org/bin/view/Servers/NTPPoolServers
+# and http://www.pool.ntp.org/
+server ntp.metas.ch
+server ntp.obspm.fr
+server ntp2.jussieu.fr
+server ntp.uvsq.fr
+server ntp.u-psud.fr
+server ntp1.belbone.be
+
+# Vous pouvez ajouter votre propre horloge système comme source de temps par le paramètre fudge
+#server 127.127.1.0
+#fudge 127.127.1.0 stratum 10
+
+# Vous pouvez restreindre les clients (les ordinateurs autorisés à synchroniser leur horloge sur le serveur) :
+#restrict default kod notrap nomodify nopeer noquery
+#restrict 127.0.0.1 nomodify
+#restrict 10.8.0.0 mask 255.255.255.0 nomodify notrap
+#restrict 192.168.1.0 mask 255.255.255.0 nomodify notrap

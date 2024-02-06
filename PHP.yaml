@@ -1,0 +1,42 @@
+#ok
+---
+- name: Install and Configure PHP
+  hosts: debian
+  become: yes
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install PHP and required packages
+      apt:
+        name:
+          - php
+          - php-cli
+          - php-fpm
+          - php-mysql
+          - php-curl
+          - php-gd
+          - php-intl
+          - php-mbstring
+          - php-xml
+          - php-zip
+        state: present
+
+    - name: Create PHP configuration directory
+      file:
+        path: /etc/php/8.2/cli
+        state: directory
+
+    - name: Configure PHP
+      template:
+        src: php.ini.j2
+        dest: /etc/php/8.2/cli/php.ini
+      notify: restart php-fpm
+
+  handlers:
+    - name: restart php-fpm
+      service:
+        name: php8.2-fpm.service
+        state: restarted

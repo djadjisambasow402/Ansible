@@ -1,0 +1,22 @@
+# ok
+---
+- name: Install and configure MariaDB on Debian
+  hosts: debian
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install MariaDB server
+      apt:
+        name: mariadb-server
+        state: present
+
+    - name: Start MariaDB service
+      service:
+        name: mysql
+        state: started
+
+

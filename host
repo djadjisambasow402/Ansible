@@ -1,0 +1,16 @@
+[debian]
+#192.168.146.133 ansible_connection=ssh ansible_user=k8master1 ansible_ssh_pass=lildia
+#192.168.146.129 ansible_connection=ssh ansible_user=root ansible_ssh_pass=lildia
+#192.168.146.130 ansible_connection=ssh ansible_user=root ansible_ssh_pass=lildia
+#192.168.146.134 ansible_connection=ssh ansible_user=root ansible_ssh_pass=lildia
+192.168.146.129 ansible_connection=ssh ansible_user=root ansible_ssh_pass=lildia
+
+[ubuntu]
+#192.168.146.138 ansible_connection=ssh ansible_user=root ansible_ssh_pass=lildia
+10.3.130.124 ansible_connection=ssh ansible_user=root ansible_ssh_pass=G@inde2k-prod@
+#10.3.130.125 ansible_connection=ssh ansible_user=root ansible_ssh_pass=G@inde2k-prod@
+#10.3.130.126 ansible_connection=ssh ansible_user=root ansible_ssh_pass=G@inde2k-prod@
+
+[openstack]
+192.168.63.132 ansible_connection=ssh ansible_user=root ansible_ssh_pass=lildia
+

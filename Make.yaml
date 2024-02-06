@@ -1,0 +1,15 @@
+#ok
+---
+- name: Install make on Ubuntu and Debian
+  hosts: debian
+  become: yes  # Run tasks with sudo
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install make
+      apt:
+        name: make
+        state: present

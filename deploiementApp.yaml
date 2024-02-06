@@ -1,0 +1,21 @@
+---
+- name: Mise à jour de l'application sur Tomcat
+  hosts: votre_serveur
+  become: true
+
+  tasks:
+    - name: Déplacer le fichier WAR existant vers un répertoire de sauvegarde avec un nom basé sur la date
+      command: mv /chemin/vers/tomcat/webapps/votre_application.war /chemin/vers/backup/votre_application_{{ ansible_date_time.date }}.war
+      args:
+        creates: "/chemin/vers/backup/votre_application_{{ ansible_date_time.date }}.war"
+
+    - name: Copier le nouveau fichier WAR (nommé avec la date) vers le répertoire webapps de Tomcat
+      copy:
+        src: /chemin/vers/votre/nouvelle/application_{{ ansible_date_time.date }}.war
+        dest: /chemin/vers/tomcat/webapps/
+        remote_src: yes
+
+    - name: Redémarrer Tomcat
+      systemd:
+        name: tomcat
+        state: restarted

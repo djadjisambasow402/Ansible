@@ -1,0 +1,28 @@
+#ok
+---
+- name: Install and Configure Redis
+  hosts: debian
+  become: yes
+
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Redis server
+      apt:
+        name: redis-server
+        state: present
+
+    - name: Configure Redis
+      template:
+        src: redis.conf.j2
+        dest: /etc/redis/redis.conf
+      notify:
+        - restart redis-server
+
+  handlers:
+    - name: restart redis-server
+      service:
+        name: redis-server
+        state: restarted

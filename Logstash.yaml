@@ -1,0 +1,38 @@
+# ok
+---
+- name: Install and Configure Logstash
+  hosts: debian
+  become: yes  # Run tasks with sudo
+
+  tasks:
+    - name: Add the Elastic GPG key
+      apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        state: present
+
+    - name: Add the Elastic APT repository
+      apt_repository:
+        repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+        state: present
+
+    - name: Install OpenJDK 11
+      apt:
+        name: openjdk-17-jre
+        state: present
+
+    - name: Install Logstash
+      apt:
+        name: logstash
+        state: present
+
+    - name: Copy Logstash configuration file
+      copy:
+        src: logstash.conf
+        dest: /etc/logstash/logstash.conf
+      notify: Restart Logstash
+
+  handlers:
+    - name: Restart Logstash
+      service:
+        name: logstash
+        state: restarted

@@ -1,0 +1,22 @@
+#ok 
+---
+- name: Install GCC on Ubuntu and Debian
+  hosts: debian
+  become: yes  
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install GCC
+      apt:
+        name: gcc
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install GCC on Ubuntu
+      apt:
+        name: build-essential
+        state: present
+      when: ansible_distribution == 'Ubuntu'

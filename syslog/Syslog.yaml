@@ -1,0 +1,36 @@
+# ok
+---
+- name: Install and configure syslog
+  hosts: debian
+  become: yes  
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+      
+    - name: Install rsyslog
+      apt:
+        name: rsyslog
+        state: present   
+
+    - name: Add syslog user
+      user:
+        name: syslog
+        comment: "Syslog User"
+        system: yes
+        home: /home/syslog
+        shell: /bin/false
+        state: present
+
+    - name: Copy rsyslog configuration file
+      template:
+        src: rsyslog.conf.j2
+        dest: /etc/rsyslog.conf
+      notify: Restart rsyslog
+
+  handlers:
+    - name: Restart rsyslog
+      service:
+        name: rsyslog
+        state: restarted

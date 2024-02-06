@@ -1,0 +1,66 @@
+# ok
+---
+- name: Install Jenkins
+  hosts: debian
+  become: yes
+
+  vars:
+    jenkins_user: jenkins
+    jenkins_user_password: lildia
+
+  tasks:
+    - name: Update apt cache (for Debian/Ubuntu)
+      ansible.builtin.apt:
+        update_cache: yes
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'
+
+    - name: Install Java (OpenJDK 8)
+      ansible.builtin.apt:
+        name: openjdk-8-jdk
+        state: present
+      when: ansible_distribution == 'Ubuntu' 
+
+    - name: Install Java (OpenJDK 17)
+      ansible.builtin.apt:
+        name: openjdk-17-jdk
+        state: present
+      when: ansible_distribution == 'Debian' 
+
+    - name: Add Jenkins APT key
+      ansible.builtin.apt_key:
+        url: https://pkg.jenkins.io/debian/jenkins.io.key
+
+    - name: Add Jenkins APT repository
+      ansible.builtin.apt_repository:
+        repo: deb http://pkg.jenkins.io/debian-stable binary/
+        state: present
+
+    - name: Install Jenkins
+      ansible.builtin.apt:
+        name: jenkins
+        state: present
+
+    - name: Start Jenkins service
+      ansible.builtin.service:
+        name: jenkins
+        state: started
+
+    - name: Ensure Jenkins service is enabled on boot
+      ansible.builtin.service:
+        name: jenkins
+        enabled: yes
+
+    - name: Create Jenkins user
+      ansible.builtin.user:
+        name: "{{ jenkins_user }}"
+        password: "{{ jenkins_user_password }}"
+        shell: /bin/bash
+        home: /var/lib/jenkins
+        createhome: no
+
+    - name: Add Jenkins user to sudoers
+      ansible.builtin.copy:
+        content: "{{ jenkins_user }} ALL=(ALL:ALL) NOPASSWD:ALL"
+        dest: /etc/sudoers.d/jenkins
+        mode: 0440
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Debian'

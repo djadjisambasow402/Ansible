@@ -1,0 +1,42 @@
+# ok mais voir la version sur le apt 
+---
+- name: Installation et configuration de PostgreSQL sur Debian
+  hosts: ubuntu
+  become: yes
+
+  vars:
+    postgresql_version: "12"  # 15 pour debian et 12 pour ubuntu
+
+  tasks:
+    - name: Mise à jour des paquets
+      apt:
+        name: "*"
+        state: latest
+      become: yes
+
+    - name: Installation de PostgreSQL
+      apt:
+        name: postgresql
+      become: yes
+
+    - name: Modification du fichier de configuration PostgreSQL
+      lineinfile:
+        path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
+        regexp: '^#?listen_addresses'
+        line: "listen_addresses = '*' "
+        backup: yes
+      become: yes
+
+    - name: Modification du fichier de configuration hba
+      lineinfile:
+        path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
+        regexp: '^host.*all.*all.*127.0.0.1/32.*md5'
+        line: 'host    all             all             0.0.0.0/0               md5'
+        backup: yes
+      become: yes
+
+    - name: Redémarrage du service PostgreSQL
+      systemd:
+        name: postgresql
+        state: restarted
+      become: yes

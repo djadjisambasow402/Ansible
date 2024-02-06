@@ -1,0 +1,152 @@
+---
+- name: Install SonarQube on Ubuntu 20.04 LTS
+  hosts: ubuntu
+  become: true
+
+  tasks:
+    - name: Install OpenJDK 11
+      apt:
+        name: openjdk-11-jdk
+        state: present
+
+    - name: Add PostgreSQL repository
+      shell: echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+
+    - name: Add PostgreSQL signing key
+      apt_key:
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+        state: present
+
+    - name: Install PostgreSQL
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - postgresql
+        - postgresql-contrib
+
+    - name: Enable PostgreSQL to start on reboot
+      systemd:
+        name: postgresql
+        enabled: yes
+
+    - name: Start PostgreSQL
+      systemd:
+        name: postgresql
+        state: started
+
+    - name: Change default PostgreSQL password
+      command: passwd postgres
+      args:
+        creates: /etc/postgresql
+
+    - name: Switch to postgres user and create sonar role if it does not exist
+      become: yes
+      become_user: postgres
+      shell: |
+        psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='sonar'" | grep -q 1 || createuser sonar
+      register: sonar_role_result
+      ignore_errors: yes
+
+
+    - name: Set password for sonar user
+      become: yes
+      become_user: postgres
+      shell: psql -c "ALTER USER sonar WITH ENCRYPTED password 'P@$$word-2023';"
+
+    - name: Create sonarqube database if it does not exist
+      become: yes
+      become_user: postgres
+      shell: |
+        psql -lqt | cut -d \| -f 1 | grep -qw sonarqube || createdb -O sonar sonarqube
+      register: sonarqube_db_result
+      ignore_errors: yes
+
+    - name: Grant privileges on sonarqube database to sonar user
+      become: yes
+      become_user: postgres
+      shell: psql -c "GRANT ALL PRIVILEGES ON DATABASE sonarqube to sonar;"
+
+    - name: Exit PostgreSQL
+      become: yes
+      become_user: postgres
+      shell: |
+        echo "\\q" | psql
+      register: exit_postgres_result
+
+    - name: Install zip utility
+      apt:
+        name: zip
+        state: present
+
+    - name: Download SonarQube distribution files
+      get_url:
+        url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.6.1.59531.zip
+        dest: /tmp/sonarqube.zip
+
+    - name: Unzip SonarQube distribution
+      command: "/usr/bin/unzip -o /tmp/sonarqube.zip -d /opt/"
+
+    # - name: Unzip downloaded file
+    #   ansible.builtin.archive:
+    #     src: /tmp/sonarqube.zip
+    #     dest: /opt/sonarqube/
+    #     remote_src: yes
+
+    - name: Move unzipped files to /opt/sonarqube directory
+      command: mv /opt/sonarqube-9.6.1.59531 /opt/sonarqube
+
+    - name: Create SonarQube group
+      group:
+        name: sonar
+        state: present
+
+    - name: Create SonarQube user
+      user:
+        name: sonar
+        home: /opt/sonarqube
+        group: sonar
+
+    - name: Grant sonar user access to /opt/sonarqube directory
+      file:
+        path: /opt/sonarqube
+        owner: sonar
+        group: sonar
+        recurse: yes
+
+    - name: Edit SonarQube configuration file
+      lineinfile:
+        path: /opt/sonarqube/conf/sonar.properties
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '#sonar.jdbc.username=', line: 'sonar.jdbc.username=sonar' }
+        - { regexp: '#sonar.jdbc.password=', line: 'sonar.jdbc.password=P@$$word-2023' }
+        - { regexp: '#sonar.jdbc.url=', line: 'sonar.jdbc.url=jdbc:postgresql://localhost:5432/sonarqube' }
+
+    - name: Edit sonar script file
+      lineinfile:
+        path: /opt/sonarqube/bin/linux-x86-64/sonar.sh
+        regexp: '#RUN_AS_USER='
+        line: 'RUN_AS_USER=sonar'
+
+    - name: Create systemd service file
+      copy:
+        src: sonarqube-ubuntu.service
+        dest: /etc/systemd/system/sonar.service
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable SonarQube service
+      systemd:
+        name: sonar
+        enabled: yes
+
+    - name: Start SonarQube service
+      systemd:
+        name: sonar
+        state: started
+
+

@@ -1,0 +1,51 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install HAProxy
+      apt:
+        name: haproxy
+        state: present
+
+    - name: Copy HAProxy configuration file
+      template:
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Install Keepalived
+      apt:
+        name: keepalived
+        state: present
+
+    - name: Copy Keepalived configuration file for keepalived1
+      template:
+        src: keepalived-master.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: 0644
+      when: inventory_hostname in groups['keepalived1']
+
+    - name: Copy Keepalived configuration file for keepalived2
+      template:
+        src: keepalived-backup.conf.j2
+        dest: /etc/keepalived/keepalived.conf
+        owner: root
+        group: root
+        mode: 0644
+      when: inventory_hostname in groups['keepalived2']
+
+    - name: Start HAProxy service
+      service:
+        name: haproxy
+        state: started
+        enabled: yes
+
+    - name: Start Keepalived service
+      service:
+        name: keepalived
+        state: started
+        enabled: yes

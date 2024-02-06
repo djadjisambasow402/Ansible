@@ -1,0 +1,34 @@
+# ok
+---
+- name: Installer et configurer Nginx sur Debian
+  hosts: ubuntu
+  become: yes
+
+  tasks:
+    - name: Mise à jour du cache des paquets
+      apt:
+        update_cache: yes
+
+    - name: Installation de Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Démarrage du service Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Copie du fichier de configuration
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+      notify:
+        - Reload Nginx
+
+  handlers:
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded

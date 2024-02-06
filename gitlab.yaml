@@ -1,0 +1,47 @@
+# ok
+---
+- name: Installer et configurer GitLab sur Debian
+  hosts: debian
+  become: yes
+
+  tasks:
+    - name: Mise à jour de la liste des paquets
+      apt:
+        update_cache: yes
+
+    - name: Installation des dépendances
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - openssh-server
+          - postfix
+        state: present
+
+    - name: Ajout de la clé GPG du dépôt GitLab
+      apt_key:
+        url: 'https://packages.gitlab.com/gpg.key'
+        state: present
+
+    - name: Ajout du dépôt GitLab
+      apt_repository:
+        repo: 'deb https://packages.gitlab.com/gitlab/gitlab-ee/debian/ bullseye main'
+        state: present
+        filename: 'gitlab'
+        update_cache: yes
+
+    - name: Installation de GitLab
+      apt:
+        name: gitlab-ee
+        state: present
+
+    - name: Configuration de GitLab
+      command: gitlab-ctl reconfigure
+      async: 300
+      poll: 0
+
+  handlers:
+    - name: Redémarrage du service GitLab après la configuration
+      service:
+        name: gitlab-runsvdir
+        state: restarted

@@ -1,0 +1,40 @@
+# ok
+---
+- name: Install and configure GitLab on Ubuntu
+  hosts: ubuntu
+  become: true
+
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install required dependencies
+      apt:
+        name:
+          - curl
+          - openssh-server
+          - ca-certificates
+          - postfix  # (You may choose a different mail server)
+
+    - name: Add GitLab package repository
+      apt_repository:
+        repo: "deb https://packages.gitlab.com/gitlab/gitlab-ce/ubuntu/ focal main"
+        state: present
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install GitLab package
+      apt:
+        name: gitlab-ce
+        state: present
+
+    - name: Configure GitLab external URL
+      lineinfile:
+        path: /etc/gitlab/gitlab.rb
+        line: "external_url 'http://your-gitlab-domain.com'"
+      notify: reconfigure gitlab
+
+  handlers:
+    - name: reconfigure gitlab
+      command: gitlab-ctl reconfigure

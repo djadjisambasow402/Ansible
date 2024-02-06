@@ -1,0 +1,21 @@
+# rsyslog configuration file
+$ModLoad imuxsock # provides support for local system logging (e.g., via logger command)
+$ModLoad imklog   # provides kernel logging support (previously done by rklogd)
+
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+
+$FileOwner syslog
+$FileGroup adm
+$FileCreateMode 0640
+$DirCreateMode 0755
+$Umask 0022
+$PrivDropToUser syslog
+$PrivDropToGroup syslog
+
+$template TraditionalFileFormat,"%timegenerated% %HOSTNAME% %syslogtag%%msg%\n"
+$IncludeConfig /etc/rsyslog.d/*.conf
+
+# ... Additional configuration can go here
+
+# Example: Log all messages to a remote syslog server
+# *.* @@remote-syslog-server:514

@@ -1,0 +1,29 @@
+#ok
+---
+- name: Install and Configure Postfix
+  hosts: debian
+  become: yes
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Postfix
+      apt:
+        name: postfix
+        state: present
+
+    - name: Set Postfix configuration
+      debconf:
+        name: 'postfix/main_mailer_type'
+        question: 'postfix/main_mailer_type'
+        value: 'Internet Site'
+        vtype: 'select'
+      notify: Reload Postfix
+
+  handlers:
+    - name: Reload Postfix
+      service:
+        name: postfix
+        state: reloaded

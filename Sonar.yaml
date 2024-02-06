@@ -1,0 +1,50 @@
+---
+- hosts: debian
+  become: true
+
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - openjdk-17-jdk
+          - unzip
+
+    - name: Download and extract SonarQube
+      get_url:
+        url: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-8.9.2.46101.zip
+        dest: /tmp/sonarqube.zip
+
+    - name: Unzip SonarQube
+      ansible.builtin.unarchive:
+        src: /tmp/sonarqube.zip
+        dest: /opt
+        remote_src: yes
+
+    - name: Get the user and group of the SonarQube directory
+      stat:
+        path: /opt/sonarqube-8.9.2.46101
+      register: sonarqube_stat
+
+    - name: Set SonarQube directory permissions
+      file:
+        path: /opt/sonarqube-8.9.2.46101
+        state: directory
+        owner: "{{ sonarqube_stat.stat.uid }}"
+        group: "{{ sonarqube_stat.stat.gid }}"
+        recurse: yes
+
+    - name: Create SonarQube systemd service file
+      template:
+        src: sonarqube.service.j2
+        dest: /etc/systemd/system/sonarqube.service
+      notify: restart sonarqube
+
+  handlers:
+    - name: restart sonarqube
+      systemd:
+        name: sonarqube
+        state: restarted

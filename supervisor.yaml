@@ -1,0 +1,21 @@
+#ok
+---
+- name: Install and Configure Supervisor
+  hosts: debian
+  become: yes
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Supervisor
+      apt:
+        name: supervisor
+        state: present
+
+    - name: Ensure Supervisor service is running
+      systemd:
+        name: supervisor
+        state: started
+        enabled: yes

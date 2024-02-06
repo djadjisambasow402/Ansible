@@ -1,0 +1,88 @@
+#ok
+---
+- name: Install and Configure ZooKeeper on Ubuntu
+  hosts: ubuntu
+  become: yes
+
+  vars: 
+    zookeeper_password: "P@$$word-2023"
+  tasks:
+    - name: Install Java
+      apt:
+        name: default-jre
+        state: present
+
+    - name: Create ZooKeeper User
+      user:
+        name: zookeeper
+        createhome: yes
+        shell: /bin/bash
+      become_user: root
+
+    - name: Set Password for ZooKeeper User
+      ansible.builtin.user:
+        name: zookeeper
+        password: "{{ zookeeper_password | password_hash('sha512') }}"
+      become_user: root
+
+    - name: Add ZooKeeper User to sudoers group
+      user:
+        name: zookeeper
+        groups: sudo
+        append: yes
+      become_user: root
+
+    - name: Create ZooKeeper Data Directory
+      file:
+        path: /data/zookeeper
+        state: directory
+        owner: zookeeper
+        group: zookeeper
+
+    - name: Download and Extract ZooKeeper
+      ansible.builtin.get_url:
+        url: "https://downloads.apache.org/zookeeper/zookeeper-3.7.2/apache-zookeeper-3.7.2-bin.tar.gz"
+        dest: "/opt/apache-zookeeper-3.7.2-bin.tar.gz"
+      become_user: root
+
+    - name: Extract ZooKeeper
+      ansible.builtin.unarchive:
+        src: "/opt/apache-zookeeper-3.7.2-bin.tar.gz"
+        dest: "/opt"
+        remote_src: yes
+      become_user: root
+
+    - name: Rename ZooKeeper Directory
+      command: mv /opt/apache-zookeeper-3.7.2-bin /opt/zookeeper
+      become_user: root
+
+    - name: Set Ownership of ZooKeeper Directory
+      file:
+        path: /opt/zookeeper
+        state: directory
+        owner: zookeeper
+        group: zookeeper
+
+    - name: Create ZooKeeper Configuration File
+      template:
+        src: zoo.cfg.j2
+        dest: /opt/zookeeper/conf/zoo.cfg
+      become_user: root
+
+    - name: Create Systemd Service File for ZooKeeper
+      template:
+        src: zookeeper.service.j2
+        dest: /etc/systemd/system/zookeeper.service
+      become_user: root
+
+    - name: Reload Systemd
+      systemd:
+        daemon_reload: yes
+      become_user: root
+
+    - name: Start and Enable ZooKeeper Service
+      systemd:
+        name: zookeeper
+        state: started
+        enabled: yes
+      become_user: root

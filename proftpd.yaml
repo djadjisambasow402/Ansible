@@ -1,0 +1,26 @@
+---
+- name: Install and configure ProFTPD
+  hosts: debian
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install ProFTPD
+      apt:
+        name: proftpd-basic
+        state: present
+
+    - name: Copy ProFTPD configuration file
+      template:
+        src: proftpd.conf.j2
+        dest: /etc/proftpd/proftpd.conf
+      notify: Restart ProFTPD
+
+  handlers:
+    - name: Restart ProFTPD
+      service:
+        name: proftpd
+        state: restarted

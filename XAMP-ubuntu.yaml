@@ -1,0 +1,64 @@
+---
+- name: Install XAMPP on Ubuntu
+  hosts: ubuntu
+  become: yes
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apache2
+        - mysql-server
+        - php
+        - php-mysql
+        - libapache2-mod-php
+
+    # Option 1: Download XAMPP installer with increased timeout
+    - name: Download XAMPP installer
+      get_url:
+        url: "https://downloads.sourceforge.net/project/xampp/XAMPP%20Linux/{{ xampp_version }}/xampp-linux-x64-{{ xampp_version }}-0-installer.run"
+        dest: "/tmp/xampp-installer.run"
+        timeout: 300
+      vars:
+        xampp_version: "8.0.30"  # Change this to the desired XAMPP version
+
+    # Option 2: Use a local copy of XAMPP installer
+    # - name: Copy XAMPP installer to target server
+    #   copy:
+    #     src: "/path/to/local/xampp-linux-x64-{{ xampp_version }}-0-installer.run"
+    #     dest: "/tmp/xampp-installer.run"
+    #   vars:
+    #     xampp_version: "8.0.30"  # Change this to the desired XAMPP version
+
+    - name: Make installer executable
+      ansible.builtin.file:
+        path: "/tmp/xampp-installer.run"
+        mode: +x
+
+    - name: Run XAMPP installer
+      shell: "/tmp/xampp-installer.run --mode unattended"
+      args:
+        executable: /bin/bash
+
+    - name: Set permissions on XAMPP directory
+      ansible.builtin.file:
+        path: "/opt/lampp"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: 0755  # Adjust permissions accordingly
+
+    - name: Start Apache and MySQL services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - apache2
+        - mysql

@@ -1,0 +1,44 @@
+#ok
+---
+- name: Install and Configure Mule ESB
+  hosts: debian
+  become: yes
+
+  vars:
+    mule_version: "4.5.0"
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Java
+      apt:
+        name: openjdk-17-jdk
+        state: present
+
+    - name: Download Mule ESB
+      get_url:
+        url: "https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/{{ mule_version }}/mule-standalone-{{ mule_version }}.tar.gz"
+        dest: "/tmp/mule-standalone-{{ mule_version }}.tar.gz"
+
+    - name: Extract Mule ESB
+      ansible.builtin.unarchive:
+        src: "/tmp/mule-standalone-{{ mule_version }}.tar.gz"
+        dest: "/opt/"
+        remote_src: yes
+
+    - name: Create a symbolic link for Mule ESB
+      ansible.builtin.file:
+        src: "/opt/mule-standalone-{{ mule_version }}"
+        dest: "/opt/mule"
+        state: link
+
+    - name: Set Mule environment variables
+      lineinfile:
+        path: "/etc/environment"
+        line: "export MULE_HOME=/opt/mule"
+        state: present
+
+    - name: Start Mule ESB
+      ansible.builtin.command: "/opt/mule/bin/mule start"
+

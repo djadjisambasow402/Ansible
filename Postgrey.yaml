@@ -1,0 +1,24 @@
+#ok
+---
+- name: Install and configure Postgrey
+  hosts: debian
+  become: true
+
+  tasks:
+    - name: Install Postgrey
+      apt:
+        name: postgrey
+        state: present
+
+    - name: Configure Postgrey
+      template:
+        src: postgrey.conf.j2
+        dest: /etc/default/postgrey
+      notify:
+        - restart postgrey
+
+  handlers:
+    - name: restart postgrey
+      service:
+        name: postgrey
+        state: restarted

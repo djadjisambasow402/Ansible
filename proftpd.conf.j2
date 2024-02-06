@@ -1,0 +1,35 @@
+# proftpd.conf.j2
+DefaultRoot                     ~
+ServerIdent                     on "FTP Server ready."
+ServerName                      "My FTP Server"
+ServerType                      standalone
+DeferWelcome                    off
+
+MultilineRFC2228                on
+DefaultServer                   on
+ShowSymlinks                    on
+
+TimeoutNoTransfer               600
+TimeoutStalled                  600
+TimeoutIdle                     1200
+
+DisplayLogin                    welcome.msg
+DisplayChdir                    .message true
+
+ListOptions                     "-l"
+
+DenyFilter                      \*.*/
+
+Port                            21
+MaxInstances                    30
+
+User                            nobody
+Group                           nogroup
+
+Umask                           022 022
+
+# Use this to jail all users in their home directories
+DefaultRoot ~
+
+# Enable passive mode
+PassivePorts 49152 65534

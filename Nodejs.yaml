@@ -1,0 +1,18 @@
+# install_nodejs.yml
+#ok
+---
+- name: Install Node.js
+  hosts: ubuntu
+  become: yes  # Run tasks with sudo
+
+  tasks:
+    - name: Add Node.js repository
+      shell: curl -fsSL https://deb.nodesource.com/setup_21.x | sudo -E bash -
+      args:
+        executable: /bin/bash
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes

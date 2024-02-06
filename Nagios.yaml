@@ -1,0 +1,96 @@
+# ok
+---
+- hosts: ubuntu
+  become: true
+  tasks:
+    - name: Update and upgrade packages
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install necessary packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - wget
+        - unzip
+        - curl
+        - openssl
+        - build-essential
+        - libgd-dev
+        - libssl-dev
+        - libapache2-mod-php
+        - php-gd
+        - php
+        - apache2
+
+    - name: Download Nagios source
+      get_url:
+        url: "https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.4.12.tar.gz"
+        dest: "/tmp/nagios-4.4.12.tar.gz"
+
+    - name: Extract Nagios source
+      command: "tar -xvf /tmp/nagios-4.4.12.tar.gz"
+      args:
+        chdir: "/tmp"
+
+    - name: Configure and install Nagios
+      command: "{{ item }}"
+      args:
+        chdir: "/tmp/nagios-4.4.12"
+      loop:
+        - "./configure"
+        - "make all"
+        - "make install-groups-users"
+        - "usermod -a -G nagios www-data"
+        - "make install"
+        - "make install-init"
+        - "make install-config"
+        - "make install-commandmode"
+        - "make install-webconf"
+
+    - name: Create htpasswd file for Nagios admin
+      expect:
+        command: "htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin"
+        responses:
+          "New password:": "your_password\n"
+          "Re-type new password:": "your_password\n"
+
+
+    - name: Enable Apache modules
+      apache2_module:
+        state: present
+        name: "{{ item }}"
+      loop:
+        - rewrite
+        - cgi
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
+
+    - name: Download Nagios Plugins source
+      get_url:
+        url: "https://nagios-plugins.org/download/nagios-plugins-2.4.6.tar.gz"
+        dest: "/tmp/nagios-plugins-2.4.6.tar.gz"
+
+    - name: Extract Nagios Plugins source
+      command: "tar -zxvf /tmp/nagios-plugins-2.4.6.tar.gz"
+      args:
+        chdir: "/tmp"
+
+    - name: Configure and install Nagios Plugins
+      command: "{{ item }}"
+      args:
+        chdir: "/tmp/nagios-plugins-2.4.6"
+      loop:
+        - "./configure --with-nagios-user=nagios --with-nagios-group=nagios"
+        - "make install"
+
+    - name: Verify Nagios configuration
+      command: "/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg"
+
+    - name: Start Nagios
+      command: "/usr/local/nagios/bin/nagios -d /usr/local/nagios/etc/nagios.cfg"

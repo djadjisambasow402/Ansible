@@ -1,0 +1,14 @@
+[Unit]
+Description=SonarQube service
+After=syslog.target network.target
+
+[Service]
+Type=forking
+ExecStart=/opt/sonarqube-8.9.2.46101/bin/linux-x86-64/sonar.sh start
+ExecStop=/opt/sonarqube-8.9.2.46101/bin/linux-x86-64/sonar.sh stop
+User=debian3
+Group=debian3
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
