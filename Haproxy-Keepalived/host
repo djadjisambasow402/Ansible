@@ -1,9 +1,9 @@
 [all]
-192.168.2.239 ansible_connection=ssh ansible_user=root ansible_ssh_pass=G@inde2k-prod@
-192.168.2.240 ansible_connection=ssh ansible_user=root ansible_ssh_pass=G@inde2k-prod@
+192.168.2.239 ansible_connection=ssh ansible_user=root ansible_ssh_pass=passer123
+192.168.2.240 ansible_connection=ssh ansible_user=root ansible_ssh_pass=passer123
 
 [keepalived1]
-192.168.2.239 ansible_connection=ssh ansible_user=root ansible_ssh_pass=G@inde2k-prod@
+192.168.2.239 ansible_connection=ssh ansible_user=root ansible_ssh_pass=passer123
 
 [keepalived2]
-192.168.2.240 ansible_connection=ssh ansible_user=root ansible_ssh_pass=G@inde2k-prod@
+192.168.2.240 ansible_connection=ssh ansible_user=root ansible_ssh_pass=passer123
